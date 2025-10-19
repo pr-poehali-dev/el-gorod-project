@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,15 @@ import {
 const Index = () => {
   const [selectedClass, setSelectedClass] = useState('10А');
   const [selectedSubject, setSelectedSubject] = useState('Математика');
+  const [editingGrade, setEditingGrade] = useState<{ studentId: number; subject: string } | null>(null);
+  const [studentsData, setStudentsData] = useState([
+    { id: 1, name: 'Иванов Иван Иванович', class: '10А', math: 5, physics: 4, russian: 5, english: 4, avg: 4.5 },
+    { id: 2, name: 'Петрова Анна Сергеевна', class: '10А', math: 5, physics: 5, russian: 4, english: 5, avg: 4.75 },
+    { id: 3, name: 'Сидоров Петр Александрович', class: '10А', math: 4, physics: 4, russian: 4, english: 3, avg: 3.75 },
+    { id: 4, name: 'Козлова Мария Дмитриевна', class: '10А', math: 5, physics: 5, russian: 5, english: 5, avg: 5.0 },
+    { id: 5, name: 'Новиков Алексей Викторович', class: '10А', math: 3, physics: 3, russian: 4, english: 4, avg: 3.5 },
+    { id: 6, name: 'Морозова Елена Игоревна', class: '10А', math: 4, physics: 5, russian: 4, english: 4, avg: 4.25 },
+  ]);
 
   const statsData = [
     { title: 'Всего учеников', value: '342', icon: 'Users', color: 'text-primary' },
@@ -33,14 +43,21 @@ const Index = () => {
     { title: 'Предметов', value: '15', icon: 'BookOpen', color: 'text-secondary' },
   ];
 
-  const students = [
-    { id: 1, name: 'Иванов Иван Иванович', class: '10А', math: 5, physics: 4, russian: 5, english: 4, avg: 4.5 },
-    { id: 2, name: 'Петрова Анна Сергеевна', class: '10А', math: 5, physics: 5, russian: 4, english: 5, avg: 4.75 },
-    { id: 3, name: 'Сидоров Петр Александрович', class: '10А', math: 4, physics: 4, russian: 4, english: 3, avg: 3.75 },
-    { id: 4, name: 'Козлова Мария Дмитриевна', class: '10А', math: 5, physics: 5, russian: 5, english: 5, avg: 5.0 },
-    { id: 5, name: 'Новиков Алексей Викторович', class: '10А', math: 3, physics: 3, russian: 4, english: 4, avg: 3.5 },
-    { id: 6, name: 'Морозова Елена Игоревна', class: '10А', math: 4, physics: 5, russian: 4, english: 4, avg: 4.25 },
-  ];
+  const updateGrade = (studentId: number, subject: string, newGrade: number) => {
+    setStudentsData(prevStudents => {
+      const updated = prevStudents.map(student => {
+        if (student.id === studentId) {
+          const updatedStudent = { ...student, [subject]: newGrade };
+          const avg = (updatedStudent.math + updatedStudent.physics + updatedStudent.russian + updatedStudent.english) / 4;
+          return { ...updatedStudent, avg: Math.round(avg * 100) / 100 };
+        }
+        return student;
+      });
+      return updated;
+    });
+    setEditingGrade(null);
+    toast.success('Оценка обновлена!');
+  };
 
   const classes = [
     { name: '9А', students: 28, teacher: 'Смирнова Е.П.', avg: 4.1 },
@@ -199,29 +216,113 @@ const Index = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {students.map((student, index) => (
+                      {studentsData.map((student, index) => (
                         <TableRow key={student.id} className="hover:bg-slate-50">
                           <TableCell className="font-medium">{index + 1}</TableCell>
                           <TableCell className="font-medium">{student.name}</TableCell>
                           <TableCell className="text-center">
-                            <Badge className={`${getGradeColor(student.math)} border font-semibold`}>
-                              {student.math}
-                            </Badge>
+                            <div className="flex justify-center gap-1">
+                              {editingGrade?.studentId === student.id && editingGrade?.subject === 'math' ? (
+                                <div className="flex gap-1">
+                                  {[2, 3, 4, 5].map(grade => (
+                                    <Button
+                                      key={grade}
+                                      size="sm"
+                                      variant="outline"
+                                      className={`w-8 h-8 p-0 ${getGradeColor(grade)} hover:scale-110 transition-transform`}
+                                      onClick={() => updateGrade(student.id, 'math', grade)}
+                                    >
+                                      {grade}
+                                    </Button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <Badge 
+                                  className={`${getGradeColor(student.math)} border font-semibold cursor-pointer hover:scale-110 transition-transform`}
+                                  onClick={() => setEditingGrade({ studentId: student.id, subject: 'math' })}
+                                >
+                                  {student.math}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge className={`${getGradeColor(student.physics)} border font-semibold`}>
-                              {student.physics}
-                            </Badge>
+                            <div className="flex justify-center gap-1">
+                              {editingGrade?.studentId === student.id && editingGrade?.subject === 'physics' ? (
+                                <div className="flex gap-1">
+                                  {[2, 3, 4, 5].map(grade => (
+                                    <Button
+                                      key={grade}
+                                      size="sm"
+                                      variant="outline"
+                                      className={`w-8 h-8 p-0 ${getGradeColor(grade)} hover:scale-110 transition-transform`}
+                                      onClick={() => updateGrade(student.id, 'physics', grade)}
+                                    >
+                                      {grade}
+                                    </Button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <Badge 
+                                  className={`${getGradeColor(student.physics)} border font-semibold cursor-pointer hover:scale-110 transition-transform`}
+                                  onClick={() => setEditingGrade({ studentId: student.id, subject: 'physics' })}
+                                >
+                                  {student.physics}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge className={`${getGradeColor(student.russian)} border font-semibold`}>
-                              {student.russian}
-                            </Badge>
+                            <div className="flex justify-center gap-1">
+                              {editingGrade?.studentId === student.id && editingGrade?.subject === 'russian' ? (
+                                <div className="flex gap-1">
+                                  {[2, 3, 4, 5].map(grade => (
+                                    <Button
+                                      key={grade}
+                                      size="sm"
+                                      variant="outline"
+                                      className={`w-8 h-8 p-0 ${getGradeColor(grade)} hover:scale-110 transition-transform`}
+                                      onClick={() => updateGrade(student.id, 'russian', grade)}
+                                    >
+                                      {grade}
+                                    </Button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <Badge 
+                                  className={`${getGradeColor(student.russian)} border font-semibold cursor-pointer hover:scale-110 transition-transform`}
+                                  onClick={() => setEditingGrade({ studentId: student.id, subject: 'russian' })}
+                                >
+                                  {student.russian}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
-                            <Badge className={`${getGradeColor(student.english)} border font-semibold`}>
-                              {student.english}
-                            </Badge>
+                            <div className="flex justify-center gap-1">
+                              {editingGrade?.studentId === student.id && editingGrade?.subject === 'english' ? (
+                                <div className="flex gap-1">
+                                  {[2, 3, 4, 5].map(grade => (
+                                    <Button
+                                      key={grade}
+                                      size="sm"
+                                      variant="outline"
+                                      className={`w-8 h-8 p-0 ${getGradeColor(grade)} hover:scale-110 transition-transform`}
+                                      onClick={() => updateGrade(student.id, 'english', grade)}
+                                    >
+                                      {grade}
+                                    </Button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <Badge 
+                                  className={`${getGradeColor(student.english)} border font-semibold cursor-pointer hover:scale-110 transition-transform`}
+                                  onClick={() => setEditingGrade({ studentId: student.id, subject: 'english' })}
+                                >
+                                  {student.english}
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell className="text-center">
                             <span className="font-bold text-lg text-primary">{student.avg.toFixed(2)}</span>
